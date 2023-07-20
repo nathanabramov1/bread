@@ -27,9 +27,25 @@ breads.post('/', (req, res) => {
   } else {
     req.body.hasGluten = false
   }
-  console.log(req.body)
   Bread.create(req.body)
-  res.redirect('/breads')
+    .then(newBread => {
+      res.redirect('/breads')
+    })
+    .catch(err => {
+      if (err && err.name == 'ValidationError') {
+        let message = 'Validation Error: '
+        console.log("Error.errors:", err.errors)
+        for (var field in err.errors) {
+            message += `${field} was ${err.errors[field].value}. `
+            message += `${err.errors[field].message}`
+        }
+        console.log('Validation error message', message)
+        res.render('new', { message, body: req.body })
+      }
+      else {
+          res.render('404')
+      }
+    })
 })
 
 // NEW
@@ -38,21 +54,32 @@ breads.get('/new', (req, res) => {
 })
 
 // EDIT
-breads.get('/:indexArray/edit', (req, res) => {
-  res.render('edit', {
-    bread: BreadData[req.params.indexArray],
-    index: req.params.indexArray
-  })
+breads.get('/:id/edit', (req, res) => {
+  Bread.findById(req.params.id)
+      .then(foundBread => {
+          console.log(foundBread)
+          res.render('edit', {
+              bread: foundBread
+          })
+      })
+      .catch(err => {
+        console.log(err)
+        res.render("404")
+      })
 })
 
 // SHOW
 breads.get('/:id', (req, res) => {
   Bread.findById(req.params.id)
       .then(foundBread => {
-          console.log(foundBread)
+          // console.log(foundBread)
           res.render('show', {
               bread: foundBread
           })
+      })
+      .catch(err => {
+        console.log(err)
+        res.render("404")
       })
 })
 
@@ -68,20 +95,45 @@ breads.get('/:id', (req, res) => {
 // })
 
 // UPDATE
-breads.put('/:arrayIndex', (req, res) => {
+breads.put('/:id', (req, res) => {
   if(req.body.hasGluten === 'on'){
     req.body.hasGluten = true
   } else {
     req.body.hasGluten = false
   }
-  BreadData[req.params.arrayIndex] = req.body
-  res.redirect(`/breads/${req.params.arrayIndex}`)
+
+  Bread.findByIdAndUpdate(req.params.id, req.body, { runValidators: true, lean: true })
+    .then(updatedBread => {
+      console.log("updated:", updatedBread)
+      res.redirect(`/breads/${req.params.id}`)
+    })
+    .catch(err => {
+      if (err && err.name == 'ValidationError') {
+        let message = 'Validation Error: '
+        console.log("Error.errors:", err.errors)
+        for (var field in err.errors) {
+            message += `${field} was ${err.errors[field].value}. `
+            message += `${err.errors[field].message}`
+        }
+        console.log('Validation error message', message)
+        res.render('edit', { message, bread: {...req.body, id: req.params.id }})
+      }
+      else {
+          res.render('404')
+      }
+    })
 })
 
 // DELETE
-breads.delete('/:arrayIndex', (req, res) => {
-  BreadData.splice(req.params.arrayIndex, 1)
-  res.status(303).redirect('/breads')
+breads.delete('/:id', (req, res) => {
+  Bread.findByIdAndDelete(req.params.id)
+    .then(deletedBread => {
+      res.status(303).redirect('/breads')
+    })
+    .catch(err => {
+      console.log(err)
+      res.render("404")
+    })
 })
 
 module.exports = breads

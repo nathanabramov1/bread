@@ -7,6 +7,8 @@ function Show ({bread}) {
       return (
         <Default title={bread.name}>
             <h3>{bread.name}</h3>
+            <h4>{bread.getBakedBy()}</h4>
+            <p>{bread.freshness()}</p>
             <a href={`/breads/${bread.id}/edit`}><button>Edit</button></a>
             <p>
                 and it
