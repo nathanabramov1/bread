@@ -31,6 +31,13 @@ const mongoose = require('mongoose')
 require('dotenv').config()
 const Bread = require('../models/breads.js')
 
+const seed = async () => {
+  const clear = await Bread.deleteMany({})
+  const insertedBreads = await Bread.insertMany(JSON.parse(data))
+  console.log(insertedBreads)
+  return insertedBreads
+}
+
 const main = async () => {
 
     // MONGOOSE CONNECT
@@ -38,10 +45,8 @@ const main = async () => {
     .then(res => console.log("connected at:", process.env.MONGO_URI))
     .catch(err => console.log(err))
 
-    // const clear = await Bread.deleteMany({})
-    // const res = await Bread.insertMany(JSON.parse(data))
-    const foundBread = await Bread.findById('64b7214f77d334c51d00932e')
-    console.log(foundBread.getBakedBy())
+    await seed()
+
     mongoose.connection.close()
 
 }
