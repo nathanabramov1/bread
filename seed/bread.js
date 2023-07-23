@@ -35,7 +35,7 @@ const data = `[
 
 const mongoose = require('mongoose')
 require('dotenv').config()
-const Bread = require('../models/breads.js')
+const Bread = require('../models/bread.js')
 const Baker = require('../models/baker.js')
 
 const seed = async () => {
