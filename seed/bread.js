@@ -10,7 +10,7 @@ const data = `[
     {
       "name": "French",
       "hasGluten": true,
-      "baker":"Phoebe",
+      "baker":"Monica",
       "image": "https://images.unsplash.com/photo-1534620808146-d33bb39128b2?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
     },
     {
@@ -22,18 +22,31 @@ const data = `[
     {
       "name": "Pumpernickel",
       "hasGluten": true,
-      "baker":"Phoebe",
+      "baker":"Chandler",
       "image": "https://images.unsplash.com/photo-1586444248902-2f64eddc13df?ixlib=rb-1.2.1&ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&auto=format&fit=crop&w=1050&q=80"
+    },
+    {
+      "name": "Wonder Bread",
+      "hasGluten": true,
+      "baker": "Joey",
+      "image": "https://m.media-amazon.com/images/I/41mHGfEASmL.jpg"
     }
   ]`
 
 const mongoose = require('mongoose')
 require('dotenv').config()
 const Bread = require('../models/breads.js')
+const Baker = require('../models/baker.js')
 
 const seed = async () => {
   const clear = await Bread.deleteMany({})
-  const insertedBreads = await Bread.insertMany(JSON.parse(data))
+  const insertedBreads = await Promise.all(
+    JSON.parse(data).map(async breadObject => {
+      const foundBaker = await Baker.findOne({name: breadObject.baker})
+      breadObject.baker = foundBaker._id
+      return await Bread.create(breadObject)
+    })
+  )
   console.log(insertedBreads)
   return insertedBreads
 }

@@ -1,13 +1,12 @@
 const express = require('express')
 const breads = express.Router()
-const BreadData = JSON.parse(require('../models/breadData.js'))
 const Bread = require('../models/breads')
+const Baker = require('../models/baker')
 
 // INDEX
 breads.get('/', (req, res) => {
     Bread.find()
       .then((response) => {
-        console.log(response)
         res.render('index',
           {
             breads: response,
@@ -19,6 +18,8 @@ breads.get('/', (req, res) => {
 
 // CREATE
 breads.post('/', (req, res) => {
+
+  // clean the form data
   if (!req.body.image) {
     req.body.image = undefined
   }
@@ -27,72 +28,71 @@ breads.post('/', (req, res) => {
   } else {
     req.body.hasGluten = false
   }
+
   Bread.create(req.body)
     .then(newBread => {
-      res.redirect('/breads')
+        res.redirect('/breads')
     })
     .catch(err => {
-      if (err && err.name == 'ValidationError') {
-        let message = 'Validation Error: '
-        console.log("Error.errors:", err.errors)
-        for (var field in err.errors) {
+        if (err && err.name == 'ValidationError') {
+          let message = 'Validation Error: '
+          console.log("Error.errors:", err.errors)
+          for (var field in err.errors) {
             message += `${field} was ${err.errors[field].value}. `
             message += `${err.errors[field].message}`
+          }
+          console.log('Validation error message', message)
+          res.render('new', { message, body: req.body })
         }
-        console.log('Validation error message', message)
-        res.render('new', { message, body: req.body })
-      }
-      else {
+        else {
           res.render('404')
-      }
+        }
     })
 })
 
 // NEW
 breads.get('/new', (req, res) => {
-  res.render('new')
+  Baker.find()
+  .then(bakers => {
+    res.render('new', { bakers: bakers })
+  })
 })
 
 // EDIT
 breads.get('/:id/edit', (req, res) => {
-  Bread.findById(req.params.id)
+  Baker.find({})
+  .then(bakers => {
+    Bread.findById(req.params.id)
+      .populate('baker')
       .then(foundBread => {
-          console.log(foundBread)
+          if (!foundBread) { throw new Error("Bread not found!") }
           res.render('edit', {
-              bread: foundBread
+              bread: foundBread,
+              bakers: bakers
           })
       })
       .catch(err => {
         console.log(err)
         res.render("404")
       })
+  })
 })
 
 // SHOW
 breads.get('/:id', (req, res) => {
   Bread.findById(req.params.id)
+      .populate('baker')
       .then(foundBread => {
-          // console.log(foundBread)
-          res.render('show', {
-              bread: foundBread
-          })
+        if (!foundBread) { throw new Error("Bread not found!") }
+        res.render('show', {
+            bread: foundBread
+        })
       })
       .catch(err => {
         console.log(err)
         res.render("404")
       })
 })
-
-// breads.get('/:arrayIndex', (req, res) => {
-//   if (BreadData[req.params.arrayIndex]) {
-//     res.render('show', {
-//       bread: BreadData[req.params.arrayIndex],
-//       index: req.params.arrayIndex
-//     })
-//   } else {
-//     res.render('404')
-//   }
-// })
 
 // UPDATE
 breads.put('/:id', (req, res) => {
