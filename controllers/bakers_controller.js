@@ -22,6 +22,14 @@ baker.get('/:id', (req, res) => {
         })
 })
 
+baker.delete('/:id', (req, res) => {
+    Baker.findByIdAndDelete(req.params.id)
+        .then(deletedBaker => {
+            // console.log(deletedBaker)
+            res.redirect('/breads')
+        })
+})
+
 
 // export
 module.exports = baker                   
